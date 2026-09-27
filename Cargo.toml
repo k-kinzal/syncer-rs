@@ -1,0 +1,41 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+license = "MIT"
+repository = "https://github.com/k-kinzal/syncer-rs"
+authors = ["k-kinzal"]
+
+[workspace.dependencies]
+anyhow = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+hcl-rs = "0.19"
+regex = "1"
+sha2 = "0.10"
+hex = "0.4"
+tempfile = "3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "time", "process"] }
+clap = { version = "4", features = ["derive"] }
+dirs = "6"
+libloading = "0.8"
+fs2 = "0.4"
+async-trait = "0.1"
+base64 = "0.22"
+url = "2"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+age = { version = "0.11", default-features = false, features = ["armor"] }
+similar = "2"
+same-file = "1"
+syncer-language = { path = "crates/syncer-language", version = "0.1.0" }
+syncer-extension-sdk = { path = "crates/syncer-extension-sdk", version = "0.1.0" }
+syncer-core = { path = "crates/syncer-core", version = "0.1.0" }
+
+[profile.release]
+lto = "thin"
+strip = "debuginfo"

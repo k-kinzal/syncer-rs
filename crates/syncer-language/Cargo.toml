@@ -1,0 +1,19 @@
+[package]
+name = "syncer-language"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "HCL policy language for syncer"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hcl-rs.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,0 +1,17 @@
+[package]
+name = "syncer-extension-claude"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "Official claude extension for syncer"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+syncer-extension-sdk.workspace = true
