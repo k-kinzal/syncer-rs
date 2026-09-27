@@ -13,7 +13,7 @@ select_roles = ["developer"]
 role "developer" {
   description = "Default development environment"
   rule "sandbox-domains" {
-    target = "claude://project/settings"
+    target = "settings.json"
     kind = "json"
     operation = "array"
     pointer = "/sandbox/network/allowedDomains"

@@ -30,10 +30,8 @@ impl Development {
             for (name, basename) in [
                 ("http", "http"),
                 ("git", "git"),
-                ("google-drive", "google_drive"),
                 ("json", "json"),
                 ("structured", "structured"),
-                ("claude", "claude"),
             ] {
                 fallbacks.push((
                     name,

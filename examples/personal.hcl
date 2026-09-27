@@ -4,7 +4,7 @@ select_roles = ["preferences"]
 
 role "preferences" {
   rule "personal-domain" {
-    target = "claude://project/settings"
+    target = "settings.json"
     kind = "json"
     operation = "array"
     pointer = "/sandbox/network/allowedDomains"

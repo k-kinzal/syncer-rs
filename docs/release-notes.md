@@ -1,3 +1,22 @@
+# v0.2.0 development (not released)
+
+- Official native extensions are HTTP, Git, JSON and structured documents. Claude
+  aliases and Google Drive are deferred from official support pending local
+  validation; they are excluded from workspace builds, release archives,
+  registry publishing and automatic development loading.
+- HTTPS sources use the HTTP transport unless enrollment explicitly selects
+  another installed extension. Existing explicit selections are preserved.
+- Public layered examples use ordinary file paths and require only JSON support.
+- Structured document patches cover YAML, TOML, HCL, XML, JSONC/JSON5, INI, dotenv,
+  Java properties, CSV/TSV and XML plist.
+- CLI output defaults to human-readable summaries; explicit output formats and
+  JMESPath queries support automation.
+
+This version is not tagged or published. Previously released artifacts are
+unchanged. The user controls release timing.
+
+# v0.1.0 (historical release)
+
 First public release of Syncer: layered HCL file synchronization for macOS, Linux and Windows.
 
 - Full text/binary file synchronization through locally enrolled assets, plus text/regex patches.

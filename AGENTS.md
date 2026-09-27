@@ -10,7 +10,7 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 - `crates/syncer-extension-sdk`: versioned C ABI and JSON messages. Never expose Rust ABI types.
 - Official source, document and target extensions are independent `cdylib` crates under `crates/`.
 - `crates/syncer-document` shares value patch semantics; `syncer-extension-structured` owns format parsers and rendering, never the core.
-- Core includes only local sources, full file replacement and text/regex operations. HTTP, Git, Drive, JSON and Claude support must remain extensions.
+- Core includes only local sources, full file replacement and text/regex operations. Official extensions are HTTP, Git, JSON and structured documents. Service-specific transports and application aliases require local validation before promotion; keep them outside the official workspace, distribution and automatic loading.
 
 ## Invariants
 
@@ -28,7 +28,11 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 
 ## Workflow
 
-Use `work/` for local dogfooding policies, target files and isolated state, and
+Use `work/` only for disposable dogfooding copies, generated files, logs and
+isolated state. The entire directory may be deleted at any time; never keep the
+only copy of reusable scripts, policy examples or documentation there. Keep
+public reusable fixtures in `examples/` or `scripts/`, and private ones inside
+their ignored experimental crate. Recreate scratch directories as needed. Use
 `crates/experimental-*/` for experimental extension crates. Both are Git-ignored;
 do not force-add their contents. The public workspace includes only `crates/syncer-*`.
 Keep each experiment in its own workspace with a local `[workspace]` table,

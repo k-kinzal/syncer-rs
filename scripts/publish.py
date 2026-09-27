@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from email.utils import parsedate_to_datetime
 
-PACKAGES = ["syncer-language", "syncer-extension-sdk", "syncer-document", "syncer-core", "syncer-cli", "syncer-extension-http", "syncer-extension-git", "syncer-extension-google-drive", "syncer-extension-json", "syncer-extension-claude", "syncer-extension-structured"]
+PACKAGES = ["syncer-language", "syncer-extension-sdk", "syncer-document", "syncer-core", "syncer-cli", "syncer-extension-http", "syncer-extension-git", "syncer-extension-json", "syncer-extension-structured"]
 
 
 def is_published(url):

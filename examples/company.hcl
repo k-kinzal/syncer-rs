@@ -6,7 +6,7 @@ revision = "2026-09-27"
 
 role "developer" {
   rule "sandbox-domains" {
-    target = "claude://project/settings"
+    target = "settings.json"
     kind = "json"
     operation = "array"
     pointer = "/sandbox/network/allowedDomains"
@@ -20,7 +20,7 @@ role "developer" {
   }
 
   rule "sandbox-enabled" {
-    target = "claude://project/settings"
+    target = "settings.json"
     kind = "json"
     operation = "set"
     pointer = "/sandbox/enabled"

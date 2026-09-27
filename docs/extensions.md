@@ -4,8 +4,7 @@ Build official extensions with `cargo build --release --workspace`. Libraries ar
 
 ```sh
 syncer extension install ./libsyncer_extension_json.dylib --sha256 DIGEST
-syncer extension install ./libsyncer_extension_claude.dylib
-syncer extension install ./libsyncer_extension_google_drive.dylib
+syncer extension install ./libsyncer_extension_http.dylib
 syncer extension list
 ```
 
@@ -24,7 +23,7 @@ export SYNCER_DEV_EXTENSIONS=1
 target/release/syncer apply --dry-run
 ```
 
-This finds `http`, `git`, `google-drive`, `json`, `structured`, and `claude` under
+This finds `http`, `git`, `json`, and `structured` under
 their usual platform filenames. The directory is the physical executable's
 directory, even when launching through PATH or a symlink; the working directory
 and its subdirectories are never searched. Missing libraries are skipped; broken
@@ -70,11 +69,16 @@ Document actions are `apply`, `check`, `constraints`. `check` validates the full
 
 - `http`: HTTP(S) GET, conditional PUT for policy publishing, POST for encrypted report submission. Redirects are rejected; enroll the final endpoint. Optional `--credential access_token=ENV_NAME`. Authenticated non-loopback endpoints must use HTTPS. A server must actually implement ETag/If-Match for conditional publishing.
 - `git`: `git+https://github.com/org/repo.git?ref=main#path/policy.hcl` or `git+ssh://git@github.com/org/repo.git?ref=main#path/policy.hcl`. Requires installed Git. Fetches into a temporary bare repository, without checkout/hooks. No embedded HTTPS passwords and no interactive prompts. SSH agent auth is available; Git global/system configuration is disabled. Read-only in v1; publish using normal Git workflows.
-- `google-drive`: `drive://FILE_ID` or Google Drive file URLs. Raw uploaded policy files are supported; Google Docs export is not. Use an OAuth access token through `--credential access_token=ENV_NAME`, or a renewable credential set through `--credential refresh_token=ENV_NAME --credential client_id=ENV_NAME --credential client_secret=ENV_NAME` (client secret is optional where OAuth client type permits). Register/authorize your own Google OAuth client. No secrets are written to enrollment; only environment variable names are stored. Unattended services must receive those variables. Publishes with Drive media PATCH and conditional revision. Reports create randomly named encrypted blobs in the enrolled folder. Folder peers may see ciphertext/size/timing, never plaintext without the provider private key.
 - `json`: strict JSON field/array patches and constraints.
 - `structured` (v0.2.0 development): YAML, TOML, HCL, XML, JSONC, JSON5, INI, dotenv, Java properties, CSV, TSV and XML plist selected-field patches. See [selectors and format guarantees](formats.md).
-- `claude`: `claude://user/settings`, `user/instructions`, `project/settings`, `project/local`, `project/instructions`. These map to `~/.claude/settings.json`, `~/.claude/CLAUDE.md`, `<project>/.claude/settings.json`, `<project>/.claude/settings.local.json`, `<project>/CLAUDE.md`. Extra skills/files use ordinary locally approved paths.
+
+Service-specific transports and application aliases are outside the current
+official set pending validation. Locally built extensions require explicit
+installation. HTTPS sources select their transport by URI scheme; use
+`--extension NAME` when explicitly enrolling a service-specific handler for an
+HTTPS URL. The CLI does not infer a service provider from a hostname. Existing
+enrollments with an explicit extension name retain that choice.
 
 External APIs beyond file synchronization (for example repository settings) are a third-party extension responsibility. The generic async interface supports custom methods, but v1 CLI planning does not orchestrate arbitrary external side effects as file transactions.
 
-References: [Rust linkage](https://doc.rust-lang.org/reference/linkage.html), [HCL](https://github.com/hashicorp/hcl), [Drive downloads](https://developers.google.com/workspace/drive/api/guides/manage-downloads), [Drive uploads](https://developers.google.com/workspace/drive/api/guides/manage-uploads), [age encryption](https://docs.rs/age/0.11.5/age/).
+References: [Rust linkage](https://doc.rust-lang.org/reference/linkage.html), [HCL](https://github.com/hashicorp/hcl), [age encryption](https://docs.rs/age/0.11.5/age/).

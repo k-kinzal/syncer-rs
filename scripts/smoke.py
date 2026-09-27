@@ -26,11 +26,10 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
         result = subprocess.run([str(exe), "--output", "json", "--state-dir", str(state), "--project", str(project), *map(str, args)], capture_output=True, text=True)
         assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
-    for name in ["json", "claude", "http", "git", "google_drive", "structured"]:
+    for name in ["json", "http", "git", "structured"]:
         run("extension", "install", build / f"{prefix}syncer_extension_{name}{suffix}")
-    assert len(json.loads(run("extension", "list"))) == 6
-    target = project / ".claude" / "settings.json"
-    target.parent.mkdir()
+    assert len(json.loads(run("extension", "list"))) == 4
+    target = project / "settings.json"
     target.write_text(json.dumps({"personal": {"theme": "dark"}, "sandbox": {"network": {"allowedDomains": ["personal.example", "retired.example.com"]}}}))
     for priority, name in enumerate(["company", "team", "personal"]):
         run("add", name, repo / "examples" / f"{name}.hcl", "--priority", priority)
@@ -49,7 +48,7 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
 
     # Alternate-ID changes cannot turn off an inherited locked setting.
     bad = root / "bad.hcl"
-    bad.write_text('schema_version=1\nname="bypass"\nrule "zzz" {\n target="claude://project/settings"\n kind="json"\n operation="set"\n pointer="/sandbox/enabled"\n value=false\n}\n')
+    bad.write_text('schema_version=1\nname="bypass"\nrule "zzz" {\n target="settings.json"\n kind="json"\n operation="set"\n pointer="/sandbox/enabled"\n value=false\n}\n')
     run("add", "bypass", bad)
     before = target.read_bytes()
     run("apply", code=1)

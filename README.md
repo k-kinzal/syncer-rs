@@ -11,6 +11,12 @@ Development builds default to readable CLI summaries and tables. Use
 `syncer extension list --query '[].name' --output text` to select values.
 See [output formats and queries](docs/output.md).
 
+The development version's official extensions are `http`, `git`, `json` and
+`structured`. Claude aliases and Google Drive integration are deferred from
+official support while undergoing local validation. They are excluded from
+current workspace builds, distribution and automatic discovery; the published
+0.1.0 artifacts remain historical releases.
+
 ## Install
 
 Download a platform archive from [GitHub Releases](https://github.com/k-kinzal/syncer-rs/releases). Archives include `syncer` and independent official extension libraries. Verify against `SHA256SUMS` before installation.
@@ -39,7 +45,6 @@ The crates.io package name is `syncer-cli`, and its binary is `syncer`. Release 
 ```sh
 # macOS, from a downloaded archive or target/release
 syncer extension install ./libsyncer_extension_json.dylib
-syncer extension install ./libsyncer_extension_claude.dylib
 # Homebrew libraries: $(brew --prefix syncer)/lib/syncer/
 # Linux: .so; Windows: syncer_extension_json.dll
 ```
@@ -72,20 +77,20 @@ syncer apply --dry-run --diff
 syncer apply
 ```
 
-These examples use the JSON and Claude extensions. JSON patches retain unmanaged fields and personal array entries. `ensure` accepts an existing value that satisfies the policy (for example any number ≥ 1); `value` is a fallback for repair. `free`, `constrained` and `locked` control descendant customization. Roles can be defined anywhere and selected from any ancestor. Rationale, dates and policy contacts stay alongside the rules.
+These examples patch `settings.json` using the JSON extension. JSON patches retain unmanaged fields and personal array entries. `ensure` accepts an existing value that satisfies the policy (for example any number ≥ 1); `value` is a fallback for repair. `free`, `constrained` and `locked` control descendant customization. Roles can be defined anywhere and selected from any ancestor. Rationale, dates and policy contacts stay alongside the rules.
 
-Source names are local enrollment names; HCL policy names identify roles and reports. Relative targets resolve under the current project, so use a fixed `--project` for background execution. `--allow-root` is a local trust boundary: a remote policy cannot grant itself permission to edit another directory. To manage user Claude settings, explicitly enroll `--allow-root ~/.claude` after creating that directory.
+Source names are local enrollment names; HCL policy names identify roles and reports. Relative targets resolve under the current project, so use a fixed `--project` for background execution. `--allow-root` is a local trust boundary: a remote policy cannot grant itself permission to edit another directory. User configuration files outside the project require their own explicitly approved root.
 
 ## Remote policies and rule sharing
 
 ```sh
-syncer extension install ./libsyncer_extension_google_drive.dylib
-syncer add global-config 'https://drive.google.com/file/d/FILE_ID/view' \
-  --credential access_token=SYNCER_DRIVE_ACCESS_TOKEN --allow-root .
+syncer extension install ./libsyncer_extension_http.dylib
+syncer add global-config 'https://config.example.com/company.hcl' \
+  --credential access_token=SYNCER_HTTP_ACCESS_TOKEN --allow-root .
 syncer apply --dry-run
 syncer apply
 
-# Publish your own HCL policy to the enrolled Drive file, then let a team enroll it.
+# Publish to an endpoint that supports conditional PUT, then let a team enroll it.
 syncer push global-config ./my-rules.hcl --dry-run
 syncer push global-config ./my-rules.hcl
 
@@ -93,20 +98,20 @@ syncer push global-config ./my-rules.hcl
 syncer daemon --interval 86400
 ```
 
-For unattended Drive access, use renewable OAuth credentials as described in [extensions.md](docs/extensions.md). HTTP and Git are separate official extensions; `syncer fetch` refreshes cached policies, and `apply --offline` explicitly uses that cache. Source retrieval failures stop application; old policy is never silently substituted. Rules are files themselves: publish HCL through `push`, Git, or any other file distribution workflow. There is no implicit bidirectional merge.
+HTTP and Git are separate official extensions; see [extensions.md](docs/extensions.md) for authentication and transport requirements. HTTP publishing requires a server implementing ETag/If-Match and PUT; Git sources are read-only. `syncer fetch` refreshes cached policies, and `apply --offline` explicitly uses that cache. Source retrieval failures stop application; old policy is never silently substituted. Rules are files themselves: publish HCL through `push`, Git, or any other file distribution workflow. There is no implicit bidirectional merge.
 
 ## Provider reporting
 
 Reporting is off by default. Enroll a provider's age public key and a sink explicitly:
 
 ```sh
-syncer report enable company drive://REPORT_FOLDER_ID \
-  --recipient age1... --extension google-drive \
-  --credential access_token=SYNCER_DRIVE_ACCESS_TOKEN
+syncer report enable company https://reports.example.com/ingest \
+  --recipient age1... --extension http \
+  --credential access_token=SYNCER_HTTP_ACCESS_TOKEN
 syncer report flush
 ```
 
-Before/after compliance, rule IDs, policy digests and observation times are encrypted **before** transport. No file paths, settings, usernames or hostnames are included. A random installation secret produces separate provider-scoped pseudonyms, allowing remediation trends without a machine name. Pseudonymity is not perfect anonymity: providers can correlate observations within their scope, and transport accounts/metadata may still identify uploaders. Folder peers can see ciphertext but cannot decrypt it with their own credentials. See [reporting.md](docs/reporting.md).
+Before/after compliance, rule IDs, policy digests and observation times are encrypted **before** transport. No file paths, settings, usernames or hostnames are included. A random installation secret produces separate provider-scoped pseudonyms, allowing remediation trends without a machine name. Pseudonymity is not perfect anonymity: providers can correlate observations within their scope, and transport accounts/metadata may still identify uploaders. Storage readers can see ciphertext but need the provider's private key to decrypt it. See [reporting.md](docs/reporting.md).
 
 ## Documentation and development
 
@@ -134,5 +139,9 @@ the official libraries beside the executable without installing them. Set
 `export SYNCER_DEV_EXTENSIONS=1` in your development shell to use this mode with
 ordinary `syncer` commands on PATH. Rebuilds are picked up on the next command;
 explicitly installed copies take precedence. See [development loading](docs/extensions.md#local-development-without-installation).
+
+`work/` is disposable local scratch space and may be deleted in full. Keep reusable
+scripts, examples and documentation outside it; experiments should recreate their
+output directories when needed.
 
 The supported core boundary is file synchronization. Arbitrary third-party cloud administration remains an extension author's responsibility. This release handles files up to 16 MiB (UTF-8 for patches, arbitrary bytes for asset replacement), not recursive directory mirroring. It does not provide hosted Syncer Cloud, managed fleet enrollment or an OS security boundary against local administrators.

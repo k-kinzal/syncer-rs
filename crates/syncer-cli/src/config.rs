@@ -119,15 +119,6 @@ impl Endpoint {
         } else {
             uri.into()
         };
-        let extension = extension.or_else(|| {
-            if uri.starts_with("https://drive.google.com/")
-                || uri.starts_with("https://docs.google.com/")
-            {
-                Some("google-drive".into())
-            } else {
-                None
-            }
-        });
         Ok(Self {
             uri,
             extension,
@@ -269,5 +260,25 @@ pub fn cache_bytes(source: &Source, cache: &Cache) -> Result<Vec<u8>> {
         decode(&Value::String(cache.data.clone()))
     } else {
         Ok(cache.data.as_bytes().to_vec())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn https_hosts_do_not_implicitly_select_a_service_extension() {
+        let project = std::env::current_dir().unwrap();
+        for uri in [
+            "https://drive.google.com/file/d/example/view",
+            "https://docs.google.com/document/d/example/edit",
+            "https://config.example.com/policy.hcl",
+        ] {
+            let endpoint = Endpoint::new(uri, None, &[], &project).unwrap();
+            assert!(endpoint.extension.is_none());
+            let explicit = Endpoint::new(uri, Some("custom-source".into()), &[], &project).unwrap();
+            assert_eq!(explicit.extension.as_deref(), Some("custom-source"));
+        }
     }
 }

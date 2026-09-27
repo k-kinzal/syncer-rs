@@ -1,6 +1,6 @@
 # Architecture and support boundary
 
-Syncer synchronizes files on macOS, Linux and Windows. It is a policy-aware reconciler, with local enrollment controlling what downloaded policies may touch. HTTP/Git/Drive transports, document adapters and application target aliases are separately shipped native libraries. The CLI never links those official extension implementations.
+Syncer synchronizes files on macOS, Linux and Windows. It is a policy-aware reconciler, with local enrollment controlling what downloaded policies may touch. HTTP/Git transports and JSON/structured document adapters are separately shipped official native libraries. Application target aliases and service-specific transports can be developed independently. The CLI never links extension implementations.
 
 ## Pipeline
 

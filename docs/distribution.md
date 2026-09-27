@@ -2,7 +2,7 @@
 
 Workspace packages use independent crates under `crates/` and one coordinated version. The command package is `syncer-cli`; the installed executable is `syncer`. Official extensions are independent `cdylib` packages, not core feature flags.
 
-The latest published version is **0.1.0**. The working tree is **0.2.0 development**, including the new shared document library and structured-format extension. Its tag and publication are reserved for the user's explicit release instruction; building locally does not publish anything. Development archives include a sixth native library, `structured`, in addition to the five in v0.1.0.
+The latest published version is **0.1.0**. The working tree is **0.2.0 development**, including the new shared document library and structured-format extension. Its tag and publication are reserved for the user's explicit release instruction; building locally does not publish anything. Current development archives contain four official native libraries: `http`, `git`, `json` and `structured`. Claude and Google Drive are deferred from official distribution pending validation. Previously published v0.1.0 archives are unchanged.
 
 ## Release checks
 
@@ -11,6 +11,7 @@ cargo fmt --all --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
 cargo build --locked --workspace
+python3 -m unittest discover -s scripts -p 'test_*.py'
 python3 scripts/smoke.py target/debug
 ```
 
@@ -22,7 +23,7 @@ CI exercises Linux, macOS and Windows, including native library installation and
 - `aarch64-unknown-linux-gnu`
 - `x86_64-pc-windows-msvc`
 
-Linux binaries are built on Ubuntu 24.04 (glibc); older glibc systems should build from source. Windows binaries use MSVC and import `VCRUNTIME140.dll` plus the Universal CRT. Install the [Microsoft Visual C++ x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) if those runtimes are not present. Native extensions and host must match target architecture. Release archives contain the executable, five extension libraries, README and license. Each archive is listed in `SHA256SUMS`. macOS artifacts are not Developer ID notarized in this initial release.
+Linux binaries are built on Ubuntu 24.04 (glibc); older glibc systems should build from source. Windows binaries use MSVC and import `VCRUNTIME140.dll` plus the Universal CRT. Install the [Microsoft Visual C++ x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) if those runtimes are not present. Native extensions and host must match target architecture. Current archive packaging includes the executable, the four official extension libraries, README and license. Each archive is listed in `SHA256SUMS`. macOS artifacts are not Developer ID notarized.
 
 Push a version tag after validation to build and publish GitHub release assets. `scripts/package.py` packages each target, and the release job requires every target build/smoke check before publication. Update package version, internal dependency versions, examples/docs and package script default together when preparing a new version. Release notes live in `docs/release-notes.md`.
 

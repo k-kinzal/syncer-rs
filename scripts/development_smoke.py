@@ -44,6 +44,9 @@ with tempfile.TemporaryDirectory(prefix="syncer-development-") as temporary:
     # leaves no state. Unknown adjacent library names are not executed either.
     (project / library("json")).write_bytes(b"invalid cwd library")
     (directory / library("unofficial")).write_bytes(b"invalid unrelated library")
+    # Older build outputs must not re-enable integrations outside the official set.
+    for name in ["claude", "google_drive"]:
+        (directory / library(name)).write_bytes(b"stale non-official library")
     assert json.loads(run("extension", "list", dev="1").stdout) == []
     assert not state.exists()
 
@@ -98,9 +101,9 @@ with tempfile.TemporaryDirectory(prefix="syncer-development-") as temporary:
     assert len(json.loads(run("extension", "list", dev="1").stdout)) == 1
 
     # Expected filename alone is insufficient: the manifest name must match.
-    mismatch = directory / library("claude")
+    mismatch = directory / library("http")
     shutil.copy2(build / library("json"), mismatch)
-    assert "expected development extension claude" in run("extension", "list", dev="1", code=1).stderr
+    assert "expected development extension http" in run("extension", "list", dev="1", code=1).stderr
     mismatch.unlink()
     if os.name != "nt":
         mismatch.symlink_to(adjacent)
@@ -109,16 +112,16 @@ with tempfile.TemporaryDirectory(prefix="syncer-development-") as temporary:
 
     # A policy cannot plant a future library in the opted-in build directory,
     # even when no library currently exists there.
-    blocked = directory / library("claude")
+    blocked = directory / library("http")
     policy.write_text(f'schema_version=1\nname="dev"\nrule "plant" {{\n target="bin/{blocked.name}"\n kind="file"\n operation="replace"\n value="bad"\n}}\n')
     result = run("apply", dev="1", code=1)
     assert "development extension directory" in result.stderr
     assert not blocked.exists()
 
-    # The actual workspace output includes all six independent official crates.
-    for name in ["json", "claude", "http", "git", "google_drive", "structured"]:
+    # The actual workspace output includes four independent official extensions.
+    for name in ["json", "http", "git", "structured"]:
         shutil.copy2(build / library(name), directory / library(name))
     manifests = json.loads(run("extension", "list", dev="1").stdout)
-    assert {m["name"] for m in manifests} == {"json", "claude", "http", "git", "google-drive", "structured"}
+    assert {m["name"] for m in manifests} == {"json", "http", "git", "structured"}
 
 print("development discovery, precedence, dry-run, apply, daemon and write-protection smoke tests passed")

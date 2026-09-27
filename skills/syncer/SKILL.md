@@ -3,7 +3,7 @@ name: syncer
 description: >-
   Configure and operate the syncer file synchronization CLI: author layered HCL
   rules, preserve personal settings with field patches, install native extensions,
-  preview/apply changes, share policies through local/HTTP/Git/Drive sources, and
+  preview/apply changes, share policies through local/HTTP/Git sources, and
   troubleshoot compliance. Use for Syncer setup, team configuration distribution,
   policy roles/constraints, scheduled synchronization, or encrypted reports.
 ---
@@ -29,7 +29,7 @@ Read only the documentation needed:
 - [Document formats](../../docs/formats.md): selectors, supported types and
   preservation guarantees for structured files, when available in this version.
 - [Extensions](../../docs/extensions.md): native library installation and remote
-  authentication, including Drive.
+  authentication.
 - [Operations](../../docs/operations.md): daemon, backups and recovery.
 - [Output and queries](../../docs/output.md): machine-readable formats, JMESPath
   selection, result shapes and streaming daemon output (v0.2.0 development).
@@ -43,6 +43,8 @@ Read only the documentation needed:
 2. Use explicit `--project` and `--state-dir` for experiments. Resolve temporary
    paths physically (`pwd -P`); macOS `/tmp` and `/var` are symlink aliases and are
    rejected. Keep policy source files outside the directories/files being edited.
+   `work/` is disposable: keep reusable scripts and original examples outside it,
+   and create scratch copies/state as needed.
 3. Check `syncer list` and `syncer extension list` in that same state directory.
    Enroll only the target roots required by the user's requested work.
 4. Prefer selected-field patches for personal configuration. Use `kind = "file"`
@@ -121,9 +123,10 @@ that metadata. Never weaken constraints just to make a failing plan succeed.
 Native libraries are executable code and must come from a trusted build/release.
 Install with `syncer extension install LIBRARY` (optional `--sha256 DIGEST`).
 macOS uses `.dylib`, Linux `.so`, Windows `.dll`; host and library architectures
-must match. JSON, document formats, HTTP, Git, Drive and Claude aliases are
-extension capabilities, not built-in features. Use the installed manifests to
-confirm support. Resolve library paths physically before installation too:
+must match. The current official extensions are HTTP, Git, JSON and structured
+document formats. Application aliases and service-specific adapters require
+separate local installation and validation; do not assume they ship with Syncer.
+Use the installed manifests to confirm support. Resolve library paths physically before installation too:
 Homebrew's `/opt/homebrew/opt/...` paths are symlinks; use the resolved Cellar
 path (for example via Python `Path(library).resolve(strict=True)`).
 After rebuilding a library, reinstall it if using an installed copy: these are
@@ -135,12 +138,14 @@ the environment enables it. Never place experiment targets inside the executable
 directory: development mode protects that directory from policy writes.
 
 Enroll remote policies using `syncer add NAME URI`. Pass credential **environment
-variable names**, e.g. `--credential access_token=SYNCER_DRIVE_ACCESS_TOKEN`, never
+variable names**, e.g. `--credential access_token=SYNCER_HTTP_ACCESS_TOKEN`, never
 tokens in HCL, command output or committed files. Use `fetch` for source refresh;
 `apply` also refreshes, while `--offline` explicitly uses cached sources.
 
 For policy sharing, use `syncer push NAME LOCAL_POLICY --dry-run` before the
-requested push. Treat source policy files as data in a staging directory; active
+requested push to a transport supporting conditional publication. HTTP requires
+ETag/If-Match and PUT support at the server; Git sources use normal Git publishing.
+Treat source policy files as data in a staging directory; active
 enrolled local policies cannot also be rule targets. Remote policies cannot
 install native code, expand locally allowed roots, or enroll reporting.
 

@@ -4,7 +4,7 @@ contact = "team@example.com"
 select_roles = ["company/developer"]
 
 rule "sandbox-domains" {
-  target = "claude://project/settings"
+  target = "settings.json"
   kind = "json"
   operation = "array"
   pointer = "/sandbox/network/allowedDomains"

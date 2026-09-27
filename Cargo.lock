@@ -2202,15 +2202,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "syncer-extension-claude"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "serde_json",
- "syncer-extension-sdk",
-]
-
-[[package]]
 name = "syncer-extension-git"
 version = "0.2.0"
 dependencies = [
@@ -2220,19 +2211,6 @@ dependencies = [
  "syncer-extension-sdk",
  "tempfile",
  "url",
-]
-
-[[package]]
-name = "syncer-extension-google-drive"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "reqwest",
- "serde_json",
- "syncer-extension-sdk",
- "url",
- "uuid",
 ]
 
 [[package]]
