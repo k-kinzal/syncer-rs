@@ -30,10 +30,14 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 
 Use `work/` for local dogfooding policies, target files and isolated state, and
 `crates/experimental-*/` for experimental extension crates. Both are Git-ignored;
-do not force-add their contents. Git exclusion does not change Cargo membership:
-the existing `crates/*` workspace glob still includes experimental crates. Review
-tracked `Cargo.lock` changes separately so commits do not depend on local-only
-workspace packages.
+do not force-add their contents. The public workspace includes only `crates/syncer-*`.
+Keep each experiment in its own workspace with a local `[workspace]` table,
+explicit package/dependency metadata and `publish = false`. Its own `Cargo.lock`
+must stay inside the ignored directory. Use path dependencies on public crates;
+never add dependencies from public crates back to local experiments. Build these
+separately with `--manifest-path`; `--target-dir target` may reuse local build
+artifacts without sharing lockfiles. Keep private experiment names, paths and
+dependencies out of tracked files and public commit messages.
 
 Keep design and public examples in sync with implementation. Run `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace`. Exercise an actual dynamically loaded extension and the CLI before release. Add behavioral regression tests for policy bypasses, data loss and privacy; avoid tests that merely restate implementation. Publish crates in dependency order. Keep credentials out of files, output and commits.
 
