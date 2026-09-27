@@ -1,5 +1,8 @@
 /target/
 /dist/
+# Local dogfooding data and experimental crates.
+/work/
+/crates/experimental-*/
 *.agekey
 .DS_Store
 __pycache__/

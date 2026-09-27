@@ -28,6 +28,13 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 
 ## Workflow
 
+Use `work/` for local dogfooding policies, target files and isolated state, and
+`crates/experimental-*/` for experimental extension crates. Both are Git-ignored;
+do not force-add their contents. Git exclusion does not change Cargo membership:
+the existing `crates/*` workspace glob still includes experimental crates. Review
+tracked `Cargo.lock` changes separately so commits do not depend on local-only
+workspace packages.
+
 Keep design and public examples in sync with implementation. Run `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace`. Exercise an actual dynamically loaded extension and the CLI before release. Add behavioral regression tests for policy bypasses, data loss and privacy; avoid tests that merely restate implementation. Publish crates in dependency order. Keep credentials out of files, output and commits.
 
 When changing publishing automation, run `python3 -m unittest discover -s scripts -p 'test_*.py'`. Honor registry rate-limit retry times and skip versions already published; do not treat other upload errors as transient. Verify a registry installation in isolated state before announcing publication.
