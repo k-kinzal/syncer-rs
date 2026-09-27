@@ -11,6 +11,37 @@ syncer extension list
 
 Linux uses `libsyncer_extension_NAME.so`; Windows uses `syncer_extension_NAME.dll`. The host copies installed libraries into private state and stores SHA-256; later loads reject modified files. Installing a library executes its code, so installation is an explicit local trust decision. No library is automatically downloaded or enabled by a policy. Dependency/ABI incompatibility is a load error, not an implicit fallback. Duplicate capabilities are rejected.
 
+## Local development without installation
+
+In v0.2.0 development builds, opt in to loading official libraries beside the
+running executable:
+
+```sh
+cargo build --release --workspace
+target/release/syncer --dev-extensions extension list
+# Or enable the mode for subsequent commands in this shell:
+export SYNCER_DEV_EXTENSIONS=1
+target/release/syncer apply --dry-run
+```
+
+This finds `http`, `git`, `google-drive`, `json`, `structured`, and `claude` under
+their usual platform filenames. The directory is the physical executable's
+directory, even when launching through PATH or a symlink; the working directory
+and its subdirectories are never searched. Missing libraries are skipped; broken
+libraries, wrong manifest names, incompatible ABIs and capability conflicts are
+errors. Other library filenames are ignored.
+
+Nothing is copied, enrolled or downloaded. A rebuilt library is picked up on the
+next command (or daemon cycle). Explicitly installed extensions with the same
+name take precedence, retaining their pinned digest checks; remove the installed
+copy to try the adjacent build. `extension remove` only removes installed copies.
+Use `--dev-extensions=false` or `SYNCER_DEV_EXTENSIONS=0` to disable development
+loading. This mode defaults to off.
+
+Enabling this mode trusts executable code from the build directory, without a
+persistent integrity pin. Keep it for local testing in your own build directory.
+Policies cannot write inside that directory while the mode is enabled.
+
 ## ABI v1
 
 Export these C functions using `syncer_extension_sdk::export_extension!(dispatch)`:

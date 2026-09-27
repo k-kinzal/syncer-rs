@@ -18,6 +18,9 @@ last release. This skill is maintained in the Syncer repository under
 `skills/syncer`. Resolve symlinks on this skill's path before locating repository
 resources. For local development, build with `cargo build --release --workspace`
 and use `target/release/syncer` and the libraries alongside it.
+For v0.2.0 development builds, use `syncer --dev-extensions extension list`, or
+set `SYNCER_DEV_EXTENSIONS=1`, to load adjacent official libraries without
+installation. Keep that flag/environment setting across experiment commands.
 
 Read only the documentation needed:
 
@@ -113,8 +116,13 @@ extension capabilities, not built-in features. Use the installed manifests to
 confirm support. Resolve library paths physically before installation too:
 Homebrew's `/opt/homebrew/opt/...` paths are symlinks; use the resolved Cellar
 path (for example via Python `Path(library).resolve(strict=True)`).
-After rebuilding a library, reinstall it: installed copies are
-pinned by digest and do not track the build directory automatically.
+After rebuilding a library, reinstall it if using an installed copy: these are
+pinned by digest and do not track the build directory automatically. With
+`--dev-extensions`, adjacent libraries instead reload on the next command. An
+installed copy of the same name takes precedence; remove that copy to test the
+adjacent build. `--dev-extensions=false` disables development loading even when
+the environment enables it. Never place experiment targets inside the executable
+directory: development mode protects that directory from policy writes.
 
 Enroll remote policies using `syncer add NAME URI`. Pass credential **environment
 variable names**, e.g. `--credential access_token=SYNCER_DRIVE_ACCESS_TOKEN`, never

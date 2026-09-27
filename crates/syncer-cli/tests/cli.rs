@@ -5,6 +5,7 @@ use std::{
 };
 fn run(root: &Path, args: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_syncer"))
+        .env_remove("SYNCER_DEV_EXTENSIONS")
         .args([
             "--state-dir",
             root.join("state").to_str().unwrap(),

@@ -70,15 +70,47 @@ pub struct Extensions {
 }
 impl Extensions {
     pub async fn load(installed: &[Installed]) -> Result<Self> {
+        Self::load_with_fallbacks(installed, &[]).await
+    }
+    /// Load explicitly trusted, named fallback libraries without persisting enrollment.
+    /// Installed names take precedence and retain their digest checks. Fallback paths
+    /// must be trusted by the caller; they are intended for local development builds.
+    pub async fn load_with_fallbacks(
+        installed: &[Installed],
+        fallbacks: &[(&str, PathBuf)],
+    ) -> Result<Self> {
         let mut out = Self::default();
-        for install in installed {
+        let mut pending: Vec<_> = installed.iter().map(|i| (None, i.clone())).collect();
+        // Delay reading fallbacks until installed names are known, so a pinned copy
+        // also takes precedence over a missing or broken development build.
+        for (name, path) in fallbacks {
+            pending.push((
+                Some(*name),
+                Installed {
+                    path: path.clone(),
+                    sha256: String::new(),
+                },
+            ));
+        }
+        for (expected_name, mut install) in pending {
+            if expected_name.is_some_and(|name| out.entries.contains_key(name)) {
+                continue;
+            }
             crate::storage::reject_symlinks(&install.path)?;
+            if expected_name.is_some() {
+                match std::fs::read(&install.path) {
+                    Ok(bytes) => install.sha256 = crate::digest(&bytes),
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                    Err(error) => return Err(error).context("read development extension"),
+                }
+            }
             ensure!(
                 crate::digest(&std::fs::read(&install.path)?) == install.sha256,
                 "extension digest changed: {}",
                 install.path.display()
             );
-            // SAFETY: native extensions are explicitly installed trusted code. Rust ABI never crosses this boundary.
+            // SAFETY: native extensions are explicitly installed or trusted by the
+            // caller as development fallbacks. Rust ABI never crosses this boundary.
             let native = unsafe {
                 let library = Library::new(&install.path).context("load native extension")?;
                 let abi = *library
@@ -102,6 +134,13 @@ impl Extensions {
                 syncer_language::valid_name(&manifest.name),
                 "invalid extension name"
             );
+            if let Some(name) = expected_name {
+                ensure!(
+                    manifest.name == name,
+                    "expected development extension {name}, found {}",
+                    manifest.name
+                );
+            }
             ensure!(
                 !out.entries.contains_key(&manifest.name),
                 "duplicate extension {}",

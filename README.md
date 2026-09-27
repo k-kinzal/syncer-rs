@@ -123,4 +123,10 @@ cargo build --workspace
 python3 scripts/smoke.py target/debug
 ```
 
+For local testing, `target/release/syncer --dev-extensions extension list` loads
+the official libraries beside the executable without installing them. Set
+`export SYNCER_DEV_EXTENSIONS=1` in your development shell to use this mode with
+ordinary `syncer` commands on PATH. Rebuilds are picked up on the next command;
+explicitly installed copies take precedence. See [development loading](docs/extensions.md#local-development-without-installation).
+
 The supported core boundary is file synchronization. Arbitrary third-party cloud administration remains an extension author's responsibility. This release handles files up to 16 MiB (UTF-8 for patches, arbitrary bytes for asset replacement), not recursive directory mirroring. It does not provide hosted Syncer Cloud, managed fleet enrollment or an OS security boundary against local administrators.

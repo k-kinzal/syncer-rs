@@ -19,7 +19,7 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 3. Patch preserves unrelated settings. Ambiguous, invalid or non-idempotent patches fail closed.
 4. Child policies cannot remove inherited locked rules or weaken inherited constraints, even by using another rule ID.
 5. Active enrolled source files cannot be policy targets (prevents cross-cycle privilege bypass); use staging and explicit push. Remote policies never install native code, choose credentials, enroll reporting, or expand locally approved target roots.
-6. Installed extensions are trusted native code, pinned by digest; asynchronous host calls run outside executor threads.
+6. Installed extensions are trusted native code, pinned by digest; asynchronous host calls run outside executor threads. Explicit local `--dev-extensions` / `SYNCER_DEV_EXTENSIONS=1` may load known official libraries beside the executable without persistent pins. Installed names take precedence. Never scan the working directory or allow policies to write inside the development library directory.
 7. Reports are opt-in, encrypted to a locally pinned provider key before leaving the process, and contain no paths, values, usernames or hostnames. Scoped pseudonyms are not a claim of perfect anonymity.
 8. Reject symlinks and concurrent target edits. Back up original content before replacement. Describe multi-file crash limits honestly.
 9. macOS/Linux/Windows are tested in CI. Shared library suffixes are `.dylib`/`.so`/`.dll` respectively.

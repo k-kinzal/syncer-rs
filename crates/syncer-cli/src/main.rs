@@ -1,7 +1,9 @@
 mod config;
+mod development;
 use anyhow::{Context as _, Result, bail, ensure};
 use clap::{Parser, Subcommand};
 use config::{Config, Endpoint, Reporter, Source};
+use development::Development;
 use std::{
     path::{Path, PathBuf},
     time::Duration,
@@ -21,6 +23,11 @@ struct Cli {
     /// Project root used to resolve relative targets.
     #[arg(long, global = true)]
     project: Option<PathBuf>,
+    /// Load official libraries beside this executable for local development.
+    #[arg(long, global = true, env = "SYNCER_DEV_EXTENSIONS", default_value_t = false,
+          action = clap::ArgAction::Set, num_args = 0..=1, require_equals = true,
+          default_missing_value = "true", value_parser = clap::builder::BoolishValueParser::new())]
+    dev_extensions: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -152,6 +159,7 @@ fn absolute(path: &Path, project: &Path) -> Result<PathBuf> {
     })
 }
 async fn run(cli: Cli) -> Result<i32> {
+    let development = Development::new(cli.dev_extensions)?;
     let cwd = std::env::current_dir()?.canonicalize()?;
     let project = cli
         .project
@@ -277,7 +285,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 roots,
                 sha256,
             };
-            let extensions = Extensions::load(&config.extensions).await?;
+            let extensions = development.load(&config.extensions).await?;
             let cache = config::fetch(&source, &extensions, &state, false).await?;
             config.sources.push(source.clone());
             config.sources.sort_by_key(|s| s.priority);
@@ -286,7 +294,7 @@ async fn run(cli: Cli) -> Result<i32> {
             println!("enrolled {} (priority {})", source.name, source.priority);
         }
         Command::Fetch => {
-            let extensions = Extensions::load(&config.extensions).await?;
+            let extensions = development.load(&config.extensions).await?;
             let mut fetched = vec![];
             for source in &config.sources {
                 fetched.push((
@@ -310,6 +318,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 &config,
                 &state,
                 &context,
+                &development,
                 ApplyOptions {
                     dry_run: dry_run || check,
                     diff,
@@ -331,6 +340,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 &latest,
                 &state,
                 &context,
+                &development,
                 ApplyOptions {
                     dry_run: false,
                     diff: false,
@@ -379,7 +389,7 @@ async fn run(cli: Cli) -> Result<i32> {
             if dry_run {
                 println!("would publish {} bytes to {}", data.len(), source.name);
             } else {
-                let extensions = Extensions::load(&config.extensions).await?;
+                let extensions = development.load(&config.extensions).await?;
                 let cache = config::fetch(source, &extensions, &state, true)
                     .await
                     .context("push requires a previously fetched revision")?;
@@ -403,7 +413,7 @@ async fn run(cli: Cli) -> Result<i32> {
         }
         Command::Extension { command } => match command {
             ExtensionCommand::List => {
-                let extensions = Extensions::load(&config.extensions).await?;
+                let extensions = development.load(&config.extensions).await?;
                 println!("{}", serde_json::to_string_pretty(&extensions.manifests())?);
             }
             ExtensionCommand::Install { path, sha256 } => {
@@ -513,7 +523,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 config.save(&state)?;
             }
             ReportCommand::Flush => {
-                let extensions = Extensions::load(&config.extensions).await?;
+                let extensions = development.load(&config.extensions).await?;
                 flush(&config, &state, &extensions).await?;
             }
         },
@@ -531,13 +541,14 @@ async fn apply(
     config: &Config,
     state: &Path,
     context: &Context,
+    development: &Development,
     options: ApplyOptions<'_>,
 ) -> Result<i32> {
     ensure!(
         !config.sources.is_empty(),
         "no policy sources; use syncer add NAME PATH_OR_URL"
     );
-    let extensions = Extensions::load(&config.extensions).await?;
+    let extensions = development.load(&config.extensions).await?;
     let mut layers = vec![];
     let mut assets = std::collections::BTreeMap::new();
     let mut caches = vec![];
@@ -567,6 +578,7 @@ async fn apply(
         syncer_core::engine::plan_with_assets(&resolved, context, &extensions, &assets).await?;
     // Policies cannot rewrite their own enrollment, extension registry or protected state.
     for file in &plan.files {
+        development.check_target(&file.path)?;
         for source in &config.sources {
             if let Some(path) = source.endpoint.local_path()? {
                 ensure!(

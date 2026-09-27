@@ -112,3 +112,4 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
     run("extension", "list", code=1)
 print("native extension, layering, dry-run, asset, reporting and HTTP smoke tests passed")
 subprocess.run([sys.executable, str(repo / "scripts" / "structured_smoke.py"), str(build)], check=True)
+subprocess.run([sys.executable, str(repo / "scripts" / "development_smoke.py"), str(build)], check=True)
