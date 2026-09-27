@@ -26,7 +26,7 @@ Push a version tag after validation to build and publish GitHub release assets. 
 
 ## crates.io
 
-Package names were available at initial preparation. Registry publishing requires an authorized crates.io account/token; a GitHub login is not sufficient. This environment has no Cargo registry credentials or configured `CARGO_REGISTRY_TOKEN` secret, so **crates.io publication is pending authentication**. Do not advertise `cargo install syncer-cli` as an already available registry install until publication is confirmed.
+Registry publishing requires an authorized crates.io account/token; a GitHub login is not sufficient. The **Publish crates** workflow publishes the coordinated version using the repository `CARGO_REGISTRY_TOKEN` secret. Confirm the workflow result and [registry version](https://crates.io/crates/syncer-cli) before announcing a new release.
 
 After `cargo login` in a trusted local terminal, run:
 
