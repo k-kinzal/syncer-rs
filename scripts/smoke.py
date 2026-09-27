@@ -23,7 +23,7 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
     state = root / "state"
     def run(*args, code=0):
         print("smoke:", " ".join(map(str,args[:2])), flush=True)
-        result = subprocess.run([str(exe), "--state-dir", str(state), "--project", str(project), *map(str, args)], capture_output=True, text=True)
+        result = subprocess.run([str(exe), "--output", "json", "--state-dir", str(state), "--project", str(project), *map(str, args)], capture_output=True, text=True)
         assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
     for name in ["json", "claude", "http", "git", "google_drive", "structured"]:
@@ -58,7 +58,7 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
 
     # Reports are encrypted before reaching even a local sink.
     identity = root / "provider.agekey"
-    recipient = run("report", "keygen", identity).strip()
+    recipient = json.loads(run("report", "keygen", identity))["recipient"]
     sink = root / "reports"
     run("report", "enable", "company", sink, "--recipient", recipient)
     run("apply")

@@ -24,6 +24,7 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 8. Reject symlinks and concurrent target edits. Back up original content before replacement. Describe multi-file crash limits honestly.
 9. macOS/Linux/Windows are tested in CI. Shared library suffixes are `.dylib`/`.so`/`.dll` respectively.
 10. Never claim a release, registry upload, platform check or cloud integration succeeded without observed evidence.
+11. CLI output defaults to readable summaries. Keep machine output structured and diagnostics on stderr; scripts must select `--output json` explicitly. JMESPath queries filter presentation only, never execution or compliance. Evaluate queries before target writes, keep sensitive diffs redacted, and use JSON Lines for continuous daemon output.
 
 ## Workflow
 

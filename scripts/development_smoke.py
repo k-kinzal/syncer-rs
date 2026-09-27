@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix="syncer-development-") as temporary:
         if dev is not None:
             environment["SYNCER_DEV_EXTENSIONS"] = dev
         result = subprocess.run(
-            [str(executable), "--state-dir", str(state), "--project", str(root), *map(str, args)],
+            [str(executable), "--output", "json", "--state-dir", str(state), "--project", str(root), *map(str, args)],
             cwd=project, env=environment, capture_output=True, text=True,
         )
         assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)

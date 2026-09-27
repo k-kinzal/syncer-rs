@@ -1,5 +1,9 @@
 # Operations
 
+Commands default to readable summaries and tables. Use `--output json` for
+scripts, `--query` for JMESPath selection, and `--output jsonl` for continuous
+daemon streams. See [output formats and queries](output.md).
+
 ## State and source enrollment
 
 Default state is the platform config directory plus `syncer` (`~/Library/Application Support/syncer` on macOS, `$XDG_CONFIG_HOME/syncer` or `~/.config/syncer` on Linux, roaming AppData on Windows). Use `--state-dir` for a separate enrollment. It holds:

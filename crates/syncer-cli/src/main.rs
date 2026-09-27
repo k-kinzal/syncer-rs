@@ -1,9 +1,12 @@
 mod config;
 mod development;
+mod output;
 use anyhow::{Context as _, Result, bail, ensure};
 use clap::{Parser, Subcommand};
 use config::{Config, Endpoint, Reporter, Source};
 use development::Development;
+use output::{Format, Output, View};
+use serde_json::json;
 use std::{
     path::{Path, PathBuf},
     time::Duration,
@@ -28,6 +31,15 @@ struct Cli {
           action = clap::ArgAction::Set, num_args = 0..=1, require_equals = true,
           default_missing_value = "true", value_parser = clap::builder::BoolishValueParser::new())]
     dev_extensions: bool,
+    /// Output format. Use jsonl for a continuously running daemon.
+    #[arg(short = 'o', long, global = true, value_enum, default_value_t = Format::Human)]
+    output: Format,
+    /// JMESPath expression selecting result fields; does not filter execution.
+    #[arg(long, global = true)]
+    query: Option<String>,
+    /// Suppress normal output; errors and warnings still go to stderr.
+    #[arg(short = 'q', long, global = true, conflicts_with = "query")]
+    quiet: bool,
     #[command(subcommand)]
     command: Command,
 }
@@ -146,6 +158,9 @@ async fn main() {
     match run(Cli::parse()).await {
         Ok(code) => std::process::exit(code),
         Err(e) => {
+            if output::broken_pipe(&e) {
+                std::process::exit(0);
+            }
             eprintln!("syncer: {e:#}");
             std::process::exit(1);
         }
@@ -159,6 +174,12 @@ fn absolute(path: &Path, project: &Path) -> Result<PathBuf> {
     })
 }
 async fn run(cli: Cli) -> Result<i32> {
+    let output = Output::new(cli.output, cli.query.as_deref(), cli.quiet)?;
+    ensure!(
+        !matches!(&cli.command, Command::Daemon { once: false, .. })
+            || !matches!(cli.output, Format::Json | Format::Yaml),
+        "continuous daemon output requires --output jsonl, human, table or text; use --once for a single JSON/YAML result"
+    );
     let development = Development::new(cli.dev_extensions)?;
     let cwd = std::env::current_dir()?.canonicalize()?;
     let project = cli
@@ -211,19 +232,19 @@ async fn run(cli: Cli) -> Result<i32> {
         Command::Validate { file } => {
             let data = std::fs::read_to_string(file)?;
             let p = syncer_language::parse(&data)?;
-            println!(
-                "valid: {} ({} base rules, {} roles)",
-                p.name,
-                p.rules.len(),
-                p.roles.len()
-            );
+            output.print(View::Message, json!({"valid":true,"name":p.name,"rules":p.rules.len(),"roles":p.roles.len(),"message":format!("Valid policy {} ({} base rules, {} roles).", p.name, p.rules.len(), p.roles.len())}))?;
         }
-        Command::List => println!("{}", serde_json::to_string_pretty(&config.sources)?),
+        Command::List => output.print(View::Sources, &config.sources)?,
         Command::Remove { name } => {
             let n = config.sources.len();
             config.sources.retain(|s| s.name != name);
             ensure!(n != config.sources.len(), "source {name} is not enrolled");
+            let rendered = output.prepare(
+                View::Message,
+                json!({"action":"remove","name":name,"message":format!("Removed source {name}.")}),
+            )?;
             config.save(&state)?;
+            output::write(&rendered)?;
         }
         Command::Add {
             asset,
@@ -287,11 +308,12 @@ async fn run(cli: Cli) -> Result<i32> {
             };
             let extensions = development.load(&config.extensions).await?;
             let cache = config::fetch(&source, &extensions, &state, false).await?;
+            let rendered = output.prepare(View::Message, json!({"action":"add","source":source,"message":format!("Enrolled {} (priority {}).", source.name, source.priority)}))?;
             config.sources.push(source.clone());
             config.sources.sort_by_key(|s| s.priority);
             config.save(&state)?;
             config::save_cache(&source, &cache, &state)?;
-            println!("enrolled {} (priority {})", source.name, source.priority);
+            output::write(&rendered)?;
         }
         Command::Fetch => {
             let extensions = development.load(&config.extensions).await?;
@@ -302,10 +324,12 @@ async fn run(cli: Cli) -> Result<i32> {
                     config::fetch(source, &extensions, &state, false).await?,
                 ));
             }
+            let records: Vec<_> = fetched.iter().map(|(source, cache)| json!({"name":source.name,"sha256":cache.digest,"revision":cache.revision,"fetched_at":cache.fetched_at})).collect();
+            let rendered = output.prepare(View::Fetch, records)?;
             for (source, cache) in fetched {
                 config::save_cache(source, &cache, &state)?;
-                println!("{} {}", source.name, cache.digest);
             }
+            output::write(&rendered)?;
         }
         Command::Apply {
             dry_run,
@@ -320,6 +344,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 &context,
                 &development,
                 ApplyOptions {
+                    output: &output,
                     dry_run: dry_run || check,
                     diff,
                     offline,
@@ -342,6 +367,7 @@ async fn run(cli: Cli) -> Result<i32> {
                 &context,
                 &development,
                 ApplyOptions {
+                    output: &output,
                     dry_run: false,
                     diff: false,
                     offline: false,
@@ -357,7 +383,7 @@ async fn run(cli: Cli) -> Result<i32> {
                     }
                 }
                 Err(e) => {
-                    if once {
+                    if once || output::broken_pipe(&e) {
                         return Err(e);
                     }
                     eprintln!("syncer daemon: {e:#}; retrying in {interval}s");
@@ -386,9 +412,8 @@ async fn run(cli: Cli) -> Result<i32> {
                     "published policy would differ from pinned digest; re-enroll source first"
                 );
             }
-            if dry_run {
-                println!("would publish {} bytes to {}", data.len(), source.name);
-            } else {
+            let rendered = output.prepare(View::Message, json!({"action":"push","name":source.name,"bytes":data.len(),"dry_run":dry_run,"message":if dry_run { format!("Would publish {} bytes to {}.", data.len(), source.name) } else { format!("Published {} bytes to {}.", data.len(), source.name) }}))?;
+            if !dry_run {
                 let extensions = development.load(&config.extensions).await?;
                 let cache = config::fetch(source, &extensions, &state, true)
                     .await
@@ -408,13 +433,13 @@ async fn run(cli: Cli) -> Result<i32> {
                     .await?;
                 let fresh = config::fetch(source, &extensions, &state, false).await?;
                 config::save_cache(source, &fresh, &state)?;
-                println!("published {}", source.name);
             }
+            output::write(&rendered)?;
         }
         Command::Extension { command } => match command {
             ExtensionCommand::List => {
                 let extensions = development.load(&config.extensions).await?;
-                println!("{}", serde_json::to_string_pretty(&extensions.manifests())?);
+                output.print(View::Extensions, extensions.manifests())?;
             }
             ExtensionCommand::Install { path, sha256 } => {
                 let path = absolute(&path, &context.project)?;
@@ -431,6 +456,7 @@ async fn run(cli: Cli) -> Result<i32> {
                         .context("invalid library path")?
                         .to_string_lossy()
                 ));
+                let rendered = output.prepare(View::Message, json!({"action":"install","path":destination,"sha256":digest,"message":format!("Installed extension from {}.", path.display())}))?;
                 storage::atomic_write(&destination, &bytes, None)?;
                 let installed = Installed {
                     path: destination,
@@ -438,13 +464,10 @@ async fn run(cli: Cli) -> Result<i32> {
                 };
                 let mut all = config.extensions.clone();
                 all.push(installed);
-                let extensions = Extensions::load(&all).await?;
+                Extensions::load(&all).await?;
                 config.extensions = all;
                 config.save(&state)?;
-                println!(
-                    "installed; {} extensions enabled",
-                    extensions.manifests().len()
-                );
+                output::write(&rendered)?;
             }
             ExtensionCommand::Remove { name } => {
                 let mut keep = vec![];
@@ -458,8 +481,10 @@ async fn run(cli: Cli) -> Result<i32> {
                     }
                 }
                 ensure!(found, "extension {name} is not installed");
+                let rendered = output.prepare(View::Message, json!({"action":"remove","name":name,"message":format!("Removed installed extension {name}.")}))?;
                 config.extensions = keep;
                 config.save(&state)?;
+                output::write(&rendered)?;
             }
         },
         Command::Report { command } => match command {
@@ -470,8 +495,9 @@ async fn run(cli: Cli) -> Result<i32> {
                     "refusing to overwrite an existing private key"
                 );
                 let (secret, recipient) = syncer_core::report::keygen();
+                let rendered = output.prepare(View::Message, json!({"recipient":recipient,"identity":path,"message":format!("Created identity at {}. Public recipient: {recipient}", path.display())}))?;
                 storage::atomic_write(&path, format!("{secret}\n").as_bytes(), None)?;
-                println!("{recipient}");
+                output::write(&rendered)?;
             }
             ReportCommand::Summarize {
                 directory,
@@ -486,14 +512,12 @@ async fn run(cli: Cli) -> Result<i32> {
                             .push(storage::read_optional(&path)?.context("report disappeared")?);
                     }
                 }
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&syncer_core::report::summarize(
-                        &identity, &encrypted
-                    )?)?
-                );
+                output.print(
+                    View::ReportSummary,
+                    syncer_core::report::summarize(&identity, &encrypted)?,
+                )?;
             }
-            ReportCommand::List => println!("{}", serde_json::to_string_pretty(&config.reports)?),
+            ReportCommand::List => output.print(View::Reporters, &config.reports)?,
             ReportCommand::Enable {
                 policy,
                 sink,
@@ -510,27 +534,36 @@ async fn run(cli: Cli) -> Result<i32> {
                     !config.reports.iter().any(|r| r.policy == policy),
                     "reporting already enrolled for this policy; disable before changing recipient"
                 );
+                let rendered = output.prepare(View::Message, json!({"action":"enable","policy":policy,"sink":sink,"recipient":recipient,"message":format!("Enabled encrypted reporting for {policy}.")}))?;
                 config.reports.push(Reporter {
                     policy,
                     endpoint: Endpoint::new(&sink, extension, &credentials, &context.project)?,
                     recipient,
                 });
                 config.save(&state)?;
-                println!("encrypted reporting enabled");
+                output::write(&rendered)?;
             }
             ReportCommand::Disable { policy } => {
+                let rendered = output.prepare(View::Message, json!({"action":"disable","policy":policy,"message":format!("Disabled reporting for {policy}.")}))?;
                 config.reports.retain(|r| r.policy != policy);
                 config.save(&state)?;
+                output::write(&rendered)?;
             }
             ReportCommand::Flush => {
                 let extensions = development.load(&config.extensions).await?;
+                let rendered = output.prepare(
+                    View::Message,
+                    json!({"action":"flush","message":"Sent all queued reports."}),
+                )?;
                 flush(&config, &state, &extensions).await?;
+                output::write(&rendered)?;
             }
         },
     }
     Ok(0)
 }
 struct ApplyOptions<'a> {
+    output: &'a Output,
     dry_run: bool,
     diff: bool,
     offline: bool,
@@ -593,11 +626,14 @@ async fn apply(
             "policies cannot write inside syncer's state directory"
         );
     }
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&plan.summary(options.diff))?
-    );
+    let rendered = options.output.prepare(
+        View::Plan {
+            dry_run: options.dry_run,
+        },
+        plan.summary(options.diff),
+    )?;
     if options.dry_run {
+        output::write(&rendered)?;
         return Ok(if !plan.compliant() {
             3
         } else if options.check && plan.changed() > 0 {
@@ -609,7 +645,9 @@ async fn apply(
     let compliant = plan.compliant();
     if compliant {
         if let Some(backup) = plan.apply(state)? {
-            eprintln!("backups: {}", backup.display());
+            options
+                .output
+                .notice(&format!("Backups: {}", backup.display()));
         }
         for (source, cache) in caches {
             config::save_cache(source, &cache, state)?;
@@ -641,6 +679,7 @@ async fn apply(
     if let Err(e) = flush(config, state, &extensions).await {
         eprintln!("encrypted reports retained for retry: {e:#}");
     }
+    output::write(&rendered)?;
     if !compliant {
         bail!("unresolved rule violations; no target files changed");
     }

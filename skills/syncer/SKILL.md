@@ -31,6 +31,8 @@ Read only the documentation needed:
 - [Extensions](../../docs/extensions.md): native library installation and remote
   authentication, including Drive.
 - [Operations](../../docs/operations.md): daemon, backups and recovery.
+- [Output and queries](../../docs/output.md): machine-readable formats, JMESPath
+  selection, result shapes and streaming daemon output (v0.2.0 development).
 - [Reporting](../../docs/reporting.md): encrypted reports and provider summaries.
 - [Examples](../../examples): working policies; `local.hcl` needs no extensions.
 
@@ -68,6 +70,14 @@ syncer --project /physical/project --state-dir /physical/state apply --check
 `--check` exits 0 when clean, 2 for repairable drift, 3 for unresolved audit
 violations, and 1 for errors. Ordinary dry-run exits 0 for a valid repairable plan.
 `remove SOURCE` unenrolls a policy; it does not undo applied changes.
+
+In v0.2.0 development builds, output defaults to readable summaries and tables.
+Use `--output json` when parsing results. Use `--query` with JMESPath for output
+selection, for example `syncer extension list --query '[].name' --output text`.
+Queries never restrict execution: select paths only with `apply --dry-run` when
+previewing, and keep checking exit codes even if the query returns no results.
+For a continuous daemon use `--output jsonl`; JSON/YAML require `daemon --once`.
+Extract keygen's public recipient with `--query recipient --output text`.
 
 ## Author layered rules
 

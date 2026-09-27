@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory(prefix="syncer-structured-smoke-") as temporary
     state = root / "state"
 
     def run(*args, code=0):
-        result = subprocess.run([str(exe), "--project", str(project), "--state-dir", str(state), *map(str, args)], capture_output=True, text=True)
+        result = subprocess.run([str(exe), "--output", "json", "--project", str(project), "--state-dir", str(state), *map(str, args)], capture_output=True, text=True)
         assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
 

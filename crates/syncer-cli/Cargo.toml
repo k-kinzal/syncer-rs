@@ -18,6 +18,9 @@ serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
 clap = { workspace = true, features = ["env"] }
+jmespath = { version = "0.5", features = ["sync"] }
+serde_norway = "0.9.42"
+unicode-width = "0.2"
 dirs.workspace = true
 sha2.workspace = true
 hex.workspace = true
