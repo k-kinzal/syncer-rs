@@ -4,20 +4,26 @@ import argparse
 import hashlib
 import pathlib
 import shutil
+import subprocess
+import json
 import tarfile
 import tempfile
 import zipfile
 
 parser = argparse.ArgumentParser()
 parser.add_argument("target")
-parser.add_argument("--version", default="0.1.0")
+parser.add_argument("--version")
 args = parser.parse_args()
+workspace_version = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"]))["packages"][0]["version"]
+if args.version is not None and args.version != workspace_version:
+    parser.error("archive version must match workspace version")
+args.version = workspace_version
 source = pathlib.Path("target") / args.target / "release"
 windows = "windows" in args.target
 suffix = ".dll" if windows else ".dylib" if "apple" in args.target else ".so"
 prefix = "" if windows else "lib"
 names = ["syncer.exe" if windows else "syncer"]
-names += [f"{prefix}syncer_extension_{name}{suffix}" for name in ["http", "git", "google_drive", "json", "claude"]]
+names += [f"{prefix}syncer_extension_{name}{suffix}" for name in ["http", "git", "google_drive", "json", "claude", "structured"]]
 dist = pathlib.Path("dist")
 dist.mkdir(exist_ok=True)
 archive = dist / f"syncer-{args.version}-{args.target}{'.zip' if windows else '.tar.gz'}"

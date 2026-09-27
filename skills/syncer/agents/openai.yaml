@@ -1,0 +1,4 @@
+interface:
+  display_name: "Syncer"
+  short_description: "Manage layered file policies and native Syncer extensions"
+  default_prompt: "Use $syncer to configure and verify file synchronization for this project."

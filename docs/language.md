@@ -46,6 +46,8 @@ Rule fields: `target`, `kind`, `operation`, optional `value`, `content_from` (lo
 
 Text replacement must be idempotent. A nonmatching replacement is a no-op; combine it with a `match` audit when the presence of a setting is mandatory. JSON refuses to replace a scalar parent implicitly. Array indices address existing elements; appending is handled through `array` constraints. A missing target starts as an empty string (or `{}` for JSON). `ensure` and `array` require at least one constraint. Failed audits and unresolved repair constraints prevent all target writes.
 
+The v0.2.0 `structured` extension applies the same selected-value operations and constraints to additional formats. See [format selectors and limits](formats.md).
+
 Constraints are conjunctive:
 
 - `enum = ["A", "B"]`: whole value must equal one member.

@@ -1,19 +1,15 @@
 [package]
-name = "syncer-extension-json"
+name = "syncer-document"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "README.md"
-description = "Official json extension for syncer"
-
-[lib]
-crate-type = ["cdylib", "rlib"]
+description = "Shared structured document patch semantics for Syncer extensions"
 
 [dependencies]
 anyhow.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 syncer-language.workspace = true
-syncer-extension-sdk.workspace = true
-syncer-document.workspace = true

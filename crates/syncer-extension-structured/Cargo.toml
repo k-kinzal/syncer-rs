@@ -1,0 +1,29 @@
+[package]
+name = "syncer-extension-structured"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "Official structured file formats extension for Syncer"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+syncer-language.workspace = true
+syncer-document.workspace = true
+syncer-extension-sdk.workspace = true
+yaml-serde-edit = "0.1.1"
+yaml-edit = "0.2.3"
+toml_edit = "0.25"
+hcl-rs.workspace = true
+json-five = "0.3.1"
+jsonc-parser = { version = "0.33", features = ["serde"] }
+roxmltree = "0.21"
+plist = "1.10"
+base64.workspace = true
+csv = "1.4"

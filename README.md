@@ -4,6 +4,8 @@
 
 macOS, Linux and Windows. Rust 1.92+. MIT licensed. Initial release: **0.1.0**.
 
+The working tree is developing **0.2.0**, which is not tagged or published. Local builds add the optional `structured` extension for YAML, TOML, HCL, XML, JSONC/JSON5, INI, dotenv, Java properties, CSV/TSV and XML plist field patches. See [format support](docs/formats.md). The installation commands below install the published 0.1.0 release.
+
 ## Install
 
 Download a platform archive from [GitHub Releases](https://github.com/k-kinzal/syncer-rs/releases). Archives include `syncer` and independent official extension libraries. Verify against `SHA256SUMS` before installation.
@@ -104,12 +106,14 @@ Before/after compliance, rule IDs, policy digests and observation times are encr
 ## Documentation and development
 
 - [HCL language and constraints](docs/language.md)
+- [Structured document formats (development)](docs/formats.md)
 - [Architecture, guarantees and limits](docs/architecture.md)
 - [Extension ABI and authentication](docs/extensions.md)
 - [Reporting and privacy](docs/reporting.md)
 - [Services and recovery](docs/operations.md)
 - [Releases and package distribution](docs/distribution.md)
 - [Development instructions](AGENTS.md)
+- [Syncer agent skill](skills/syncer/SKILL.md)
 
 ```sh
 cargo fmt --all --check

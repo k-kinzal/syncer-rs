@@ -26,9 +26,9 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
         result = subprocess.run([str(exe), "--state-dir", str(state), "--project", str(project), *map(str, args)], capture_output=True, text=True)
         assert result.returncode == code, (args, result.returncode, result.stdout, result.stderr)
         return result.stdout
-    for name in ["json", "claude", "http", "git", "google_drive"]:
+    for name in ["json", "claude", "http", "git", "google_drive", "structured"]:
         run("extension", "install", build / f"{prefix}syncer_extension_{name}{suffix}")
-    assert len(json.loads(run("extension", "list"))) == 5
+    assert len(json.loads(run("extension", "list"))) == 6
     target = project / ".claude" / "settings.json"
     target.parent.mkdir()
     target.write_text(json.dumps({"personal": {"theme": "dark"}, "sandbox": {"network": {"allowedDomains": ["personal.example", "retired.example.com"]}}}))
@@ -111,3 +111,4 @@ with tempfile.TemporaryDirectory(prefix="syncer-smoke-") as temporary:
     with library.open("ab") as file: file.write(b"tampered")
     run("extension", "list", code=1)
 print("native extension, layering, dry-run, asset, reporting and HTTP smoke tests passed")
+subprocess.run([sys.executable, str(repo / "scripts" / "structured_smoke.py"), str(build)], check=True)

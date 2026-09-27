@@ -2,6 +2,8 @@
 
 Workspace packages use independent crates under `crates/` and one coordinated version. The command package is `syncer-cli`; the installed executable is `syncer`. Official extensions are independent `cdylib` packages, not core feature flags.
 
+The latest published version is **0.1.0**. The working tree is **0.2.0 development**, including the new shared document library and structured-format extension. Its tag and publication are reserved for the user's explicit release instruction; building locally does not publish anything. Development archives include a sixth native library, `structured`, in addition to the five in v0.1.0.
+
 ## Release checks
 
 ```sh

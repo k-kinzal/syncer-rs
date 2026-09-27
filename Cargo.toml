@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.92"
 license = "MIT"
@@ -32,9 +32,10 @@ uuid = { version = "1", features = ["v4", "serde"] }
 age = { version = "0.11", default-features = false, features = ["armor"] }
 similar = "2"
 same-file = "1"
-syncer-language = { path = "crates/syncer-language", version = "0.1.0" }
-syncer-extension-sdk = { path = "crates/syncer-extension-sdk", version = "0.1.0" }
-syncer-core = { path = "crates/syncer-core", version = "0.1.0" }
+syncer-language = { path = "crates/syncer-language", version = "0.2.0" }
+syncer-extension-sdk = { path = "crates/syncer-extension-sdk", version = "0.2.0" }
+syncer-core = { path = "crates/syncer-core", version = "0.2.0" }
+syncer-document = { path = "crates/syncer-document", version = "0.2.0" }
 
 [profile.release]
 lto = "thin"
