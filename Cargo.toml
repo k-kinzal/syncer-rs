@@ -39,3 +39,7 @@ syncer-core = { path = "crates/syncer-core", version = "0.1.0" }
 [profile.release]
 lto = "thin"
 strip = "debuginfo"
+
+# Native-library digest checks should remain fast in development and CI.
+[profile.dev.package."sha2@0.10.9"]
+opt-level = 3

@@ -11,6 +11,10 @@ pub fn reject_symlinks(path: &Path) -> Result<()> {
     let mut prefix = PathBuf::new();
     for component in path.components() {
         prefix.push(component);
+        // A Windows verbatim drive prefix is not a complete path until RootDir follows.
+        if matches!(component, Component::Prefix(_)) {
+            continue;
+        }
         match fs::symlink_metadata(&prefix) {
             Ok(meta) => {
                 ensure!(
