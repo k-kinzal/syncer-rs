@@ -27,3 +27,5 @@ Cross-platform, extension-driven file policy synchronization. The core support b
 ## Workflow
 
 Keep design and public examples in sync with implementation. Run `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, and `cargo test --workspace`. Exercise an actual dynamically loaded extension and the CLI before release. Add behavioral regression tests for policy bypasses, data loss and privacy; avoid tests that merely restate implementation. Publish crates in dependency order. Keep credentials out of files, output and commits.
+
+When changing publishing automation, run `python3 -m unittest discover -s scripts -p 'test_*.py'`. Honor registry rate-limit retry times and skip versions already published; do not treat other upload errors as transient. Verify a registry installation in isolated state before announcing publication.

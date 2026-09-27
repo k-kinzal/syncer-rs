@@ -42,12 +42,16 @@ syncer extension install ./libsyncer_extension_claude.dylib
 Create a disposable project and use the included local policy:
 
 ```sh
-mkdir -p /tmp/syncer-demo
-syncer --project /tmp/syncer-demo --state-dir /tmp/syncer-demo-state \
+demo_root="$(mktemp -d)"
+demo_root="$(cd "$demo_root" && pwd -P)"
+mkdir "$demo_root/project"
+syncer --project "$demo_root/project" --state-dir "$demo_root/state" \
   add personal /absolute/path/to/syncer-rs/examples/local.hcl
-syncer --project /tmp/syncer-demo --state-dir /tmp/syncer-demo-state apply --dry-run --diff
-syncer --project /tmp/syncer-demo --state-dir /tmp/syncer-demo-state apply
+syncer --project "$demo_root/project" --state-dir "$demo_root/state" apply --dry-run --diff
+syncer --project "$demo_root/project" --state-dir "$demo_root/state" apply
 ```
+
+The example resolves the temporary directory to its physical path because Syncer rejects symlinks, including macOS's `/tmp` and `/var` aliases.
 
 `apply --dry-run` reads sources and shows the proposed changes without changing targets, caches or reports. `--diff` opts into content diffs; sensitive rules suppress them. `apply --check` exits 2 on drift and 3 on unresolved audit violations. Errors exit 1. Regular dry-run exits 0 for a valid, repairable plan.
 

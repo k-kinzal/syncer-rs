@@ -9,6 +9,6 @@ First public release of Syncer: layered HCL file synchronization for macOS, Linu
 
 Initial-release scope: directory mirroring and hosted Syncer Cloud are not included. Native extensions are trusted code. Multi-file changes are not a global filesystem transaction. Google Drive requires your own OAuth credentials; authenticated live Drive integration is not verified without those credentials. See the architecture and operations documentation for exact limits.
 
-crates.io publication requires registry authentication and is tracked separately from GitHub binary distribution.
+Install the CLI from [crates.io](https://crates.io/crates/syncer-cli): `cargo install syncer-cli --version 0.1.0 --locked`. Optional native extension libraries are included in the GitHub archives and Homebrew package.
 
 Windows archives require the [Microsoft Visual C++ x64 runtime](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist). Homebrew: `brew install k-kinzal/tap/syncer`.
