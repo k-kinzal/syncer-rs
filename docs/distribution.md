@@ -20,7 +20,7 @@ CI exercises Linux, macOS and Windows, including native library installation and
 - `aarch64-unknown-linux-gnu`
 - `x86_64-pc-windows-msvc`
 
-Linux binaries are built on Ubuntu 24.04 (glibc); older glibc systems should build from source. Windows binaries use MSVC. Native extensions and host must match target architecture. Release archives contain the executable, five extension libraries, README and license. Each archive is listed in `SHA256SUMS`. macOS artifacts are not Developer ID notarized in this initial release.
+Linux binaries are built on Ubuntu 24.04 (glibc); older glibc systems should build from source. Windows binaries use MSVC and import `VCRUNTIME140.dll` plus the Universal CRT. Install the [Microsoft Visual C++ x64 Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist) if those runtimes are not present. Native extensions and host must match target architecture. Release archives contain the executable, five extension libraries, README and license. Each archive is listed in `SHA256SUMS`. macOS artifacts are not Developer ID notarized in this initial release.
 
 Push a version tag after validation to build and publish GitHub release assets. `scripts/package.py` packages each target, and the release job requires every target build/smoke check before publication. Update package version, internal dependency versions, examples/docs and package script default together when preparing a new version. Release notes live in `docs/release-notes.md`.
 
