@@ -6,10 +6,12 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.92.0
       - run: cargo test --locked --workspace
+      - run: python -m unittest discover -s scripts -p 'test_*.py'
       - name: Publish in dependency order
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

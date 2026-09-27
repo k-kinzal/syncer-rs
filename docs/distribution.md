@@ -26,6 +26,8 @@ Push a version tag after validation to build and publish GitHub release assets. 
 
 ## crates.io
 
+Install the command from the registry with `cargo install syncer-cli --version 0.1.0 --locked`. This installs `syncer`; optional native extension libraries are distributed in the release archives and Homebrew package, or can be built from their published source crates.
+
 Registry publishing requires an authorized crates.io account/token; a GitHub login is not sufficient. The **Publish crates** workflow publishes the coordinated version using the repository `CARGO_REGISTRY_TOKEN` secret. Confirm the workflow result and [registry version](https://crates.io/crates/syncer-cli) before announcing a new release.
 
 After `cargo login` in a trusted local terminal, run:
@@ -35,6 +37,8 @@ python3 scripts/publish.py
 ```
 
 Or set the repository secret `CARGO_REGISTRY_TOKEN` and run the **Publish crates** workflow. Never commit the token or put it in policy files. The script publishes language/SDK first, core/CLI next, then official extensions. Reruns skip versions already available. Workspace dependents cannot complete registry packaging verification before their dependencies exist in the registry; local builds, tests and smoke checks validate the workspace before the first publish.
+
+crates.io limits how quickly an account can publish new crate names. On an HTTP 429 response with an explicit retry time, the script waits until that time before retrying. Other publication errors stop the workflow. An initial workspace release can therefore take substantially longer than a version update.
 
 ## Homebrew
 

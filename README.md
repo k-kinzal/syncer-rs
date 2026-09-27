@@ -12,6 +12,14 @@ Download a platform archive from [GitHub Releases](https://github.com/k-kinzal/s
 brew install k-kinzal/tap/syncer
 ```
 
+Install the CLI from [crates.io](https://crates.io/crates/syncer-cli):
+
+```sh
+cargo install syncer-cli --version 0.1.0 --locked
+```
+
+Cargo installs the CLI. Get the optional native extension libraries from a release archive or build them from source.
+
 Build from source:
 
 ```sh
@@ -19,7 +27,7 @@ cargo install --path crates/syncer-cli --locked
 cargo build --release --workspace
 ```
 
-The crates.io package name is `syncer-cli`, and its binary is `syncer`. Registry publication status is documented in [distribution.md](docs/distribution.md). Core has only local file, text and regex support. Enabling extensions is an explicit choice:
+The crates.io package name is `syncer-cli`, and its binary is `syncer`. Release procedures are documented in [distribution.md](docs/distribution.md). Core has only local file, text and regex support. Enabling extensions is an explicit choice:
 
 ```sh
 # macOS, from a downloaded archive or target/release
